@@ -2,22 +2,22 @@
  * Program API Functions
  */
 
-import { api } from '@/lib/api-client';
+import { apiClient } from '@/lib/api-client';
 import type { Program } from '@/types';
 
 export const programApi = {
   list: () =>
-    api.get<{ items: Program[]; total: number }>('/api/v1/programs'),
+    apiClient.get<Program[]>('/programs'),
 
   get: (id: string) =>
-    api.get<Program>(`/api/v1/programs/${id}`),
+    apiClient.get<Program>(`/programs/${id}`),
 
   create: (data: Partial<Program>) =>
-    api.post<Program>('/api/v1/programs', data),
+    apiClient.post<Program>('/programs', data),
 
   update: (id: string, data: Partial<Program>) =>
-    api.put<Program>(`/api/v1/programs/${id}`, data),
+    apiClient.put<Program>(`/programs/${id}`, data),
 
   delete: (id: string) =>
-    api.delete<void>(`/api/v1/programs/${id}`),
+    apiClient.delete<void>(`/programs/${id}`),
 };

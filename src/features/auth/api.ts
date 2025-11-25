@@ -2,7 +2,7 @@
  * Auth API Functions
  */
 
-import { api } from '@/lib/api-client';
+import { apiClient, setAuthToken, removeAuthToken } from '@/lib/api-client';
 import type { User, AuthTokens } from '@/types';
 
 export interface RegisterData {
@@ -19,18 +19,25 @@ export interface LoginData {
 
 export const authApi = {
   register: (data: RegisterData) =>
-    api.post<User>('/api/v1/auth/register', data, { requiresAuth: false }),
+    apiClient.post<User>('/auth/register', data),
 
-  login: (data: LoginData) =>
-    api.post<AuthTokens>('/api/v1/auth/login', data, { requiresAuth: false }),
+  login: async (data: LoginData) => {
+    const response = await apiClient.post<AuthTokens>('/auth/login', {
+      username: data.email, // FastAPI OAuth2 uses 'username' field
+      password: data.password,
+    });
+    
+    // Store tokens
+    setAuthToken(response.access_token, response.refresh_token);
+    
+    return response;
+  },
 
   getCurrentUser: () =>
-    api.get<User>('/api/v1/auth/me'),
+    apiClient.get<User>('/users/me'),
 
   logout: () => {
-    // Client-side logout
-    if (typeof window !== 'undefined') {
-      localStorage.clear();
-    }
+    removeAuthToken();
+    // Optional: Call backend logout endpoint if implemented
   },
 };

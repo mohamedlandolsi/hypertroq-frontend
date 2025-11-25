@@ -1,16 +1,23 @@
 /**
  * API Client for HypertroQ Backend
  * 
- * Centralized HTTP client with authentication, error handling, and type safety.
+ * Production-ready axios-based HTTP client with:
+ * - Automatic JWT token injection
+ * - 401 handling with redirect to login
+ * - Toast notifications for errors
+ * - Type-safe request/response handling
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { toast } from 'sonner';
+import type { APIErrorResponse } from '@/types/api';
 
-interface RequestConfig extends RequestInit {
-  requiresAuth?: boolean;
-}
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
-class APIError extends Error {
+/**
+ * Custom API Error class
+ */
+export class APIError extends Error {
   constructor(
     message: string,
     public status: number,
@@ -22,7 +29,7 @@ class APIError extends Error {
 }
 
 /**
- * Get authentication token from storage
+ * Get authentication token from localStorage
  */
 function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -30,15 +37,18 @@ function getAuthToken(): string | null {
 }
 
 /**
- * Set authentication token in storage
+ * Set authentication tokens in localStorage
  */
-export function setAuthToken(token: string): void {
+export function setAuthToken(accessToken: string, refreshToken?: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('access_token', token);
+  localStorage.setItem('access_token', accessToken);
+  if (refreshToken) {
+    localStorage.setItem('refresh_token', refreshToken);
+  }
 }
 
 /**
- * Remove authentication token from storage
+ * Remove authentication tokens from localStorage
  */
 export function removeAuthToken(): void {
   if (typeof window === 'undefined') return;
@@ -47,104 +57,128 @@ export function removeAuthToken(): void {
 }
 
 /**
- * Make an authenticated API request
+ * Redirect to login page (client-side only)
  */
-async function fetchAPI<T>(
-  endpoint: string,
-  config: RequestConfig = {}
-): Promise<T> {
-  const { requiresAuth = true, headers = {}, ...rest } = config;
-
-  // Build headers
-  const requestHeaders: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...headers,
-  };
-
-  // Add auth token if required
-  if (requiresAuth) {
-    const token = getAuthToken();
-    if (token) {
-      requestHeaders['Authorization'] = `Bearer ${token}`;
-    }
+function redirectToLogin(): void {
+  if (typeof window !== 'undefined') {
+    window.location.href = '/login';
   }
-
-  // Make request
-  const url = `${API_BASE_URL}${endpoint}`;
-  const response = await fetch(url, {
-    ...rest,
-    headers: requestHeaders,
-  });
-
-  // Handle response
-  if (!response.ok) {
-    let errorDetails;
-    try {
-      errorDetails = await response.json();
-    } catch {
-      errorDetails = { message: response.statusText };
-    }
-
-    throw new APIError(
-      errorDetails.detail || errorDetails.message || 'An error occurred',
-      response.status,
-      errorDetails
-    );
-  }
-
-  // Return parsed JSON or null for 204 No Content
-  if (response.status === 204) {
-    return null as T;
-  }
-
-  return response.json();
 }
 
 /**
- * API Client Methods
+ * Parse error message from API response
  */
-export const api = {
+function parseErrorMessage(error: AxiosError<APIErrorResponse>): string {
+  if (!error.response?.data?.detail) {
+    return error.message || 'An unexpected error occurred';
+  }
+
+  const { detail } = error.response.data;
+
+  // Handle FastAPI validation errors (array format)
+  if (Array.isArray(detail)) {
+    return detail.map((err) => err.msg).join(', ');
+  }
+
+  // Handle simple string error
+  return detail;
+}
+
+/**
+ * Create axios instance with base configuration
+ */
+const axiosInstance: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 30000, // 30 seconds
+});
+
+/**
+ * Request Interceptor: Inject Authorization header
+ */
+axiosInstance.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    const token = getAuthToken();
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * Response Interceptor: Handle errors globally
+ */
+axiosInstance.interceptors.response.use(
+  (response) => {
+    // Success response - pass through
+    return response;
+  },
+  (error: AxiosError<APIErrorResponse>) => {
+    // Handle 401 Unauthorized
+    if (error.response?.status === 401) {
+      removeAuthToken();
+      toast.error('Session expired. Please login again.');
+      redirectToLogin();
+      return Promise.reject(new APIError('Unauthorized', 401));
+    }
+
+    // Handle other errors with toast notification
+    const errorMessage = parseErrorMessage(error);
+    const status = error.response?.status || 500;
+
+    // Show toast for client-side errors
+    if (typeof window !== 'undefined') {
+      toast.error(errorMessage);
+    }
+
+    return Promise.reject(
+      new APIError(errorMessage, status, error.response?.data)
+    );
+  }
+);
+
+/**
+ * API Client - Main export
+ */
+export const apiClient = {
   /**
    * GET request
    */
-  get: <T>(endpoint: string, config?: RequestConfig) =>
-    fetchAPI<T>(endpoint, { ...config, method: 'GET' }),
+  get: <T>(url: string, config = {}) =>
+    axiosInstance.get<T>(url, config).then((res) => res.data),
 
   /**
    * POST request
    */
-  post: <T>(endpoint: string, data?: unknown, config?: RequestConfig) =>
-    fetchAPI<T>(endpoint, {
-      ...config,
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-    }),
+  post: <T>(url: string, data?: unknown, config = {}) =>
+    axiosInstance.post<T>(url, data, config).then((res) => res.data),
 
   /**
    * PUT request
    */
-  put: <T>(endpoint: string, data?: unknown, config?: RequestConfig) =>
-    fetchAPI<T>(endpoint, {
-      ...config,
-      method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
-    }),
+  put: <T>(url: string, data?: unknown, config = {}) =>
+    axiosInstance.put<T>(url, data, config).then((res) => res.data),
 
   /**
    * PATCH request
    */
-  patch: <T>(endpoint: string, data?: unknown, config?: RequestConfig) =>
-    fetchAPI<T>(endpoint, {
-      ...config,
-      method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
-    }),
+  patch: <T>(url: string, data?: unknown, config = {}) =>
+    axiosInstance.patch<T>(url, data, config).then((res) => res.data),
 
   /**
    * DELETE request
    */
-  delete: <T>(endpoint: string, config?: RequestConfig) =>
-    fetchAPI<T>(endpoint, { ...config, method: 'DELETE' }),
+  delete: <T>(url: string, config = {}) =>
+    axiosInstance.delete<T>(url, config).then((res) => res.data),
 };
 
-export { APIError };
+/**
+ * Export axios instance for advanced usage
+ */
+export default axiosInstance;
