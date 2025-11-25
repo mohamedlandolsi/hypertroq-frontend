@@ -4,7 +4,13 @@
  * This file demonstrates how to use the auth store in various scenarios
  */
 
-import { useAuth } from '@/features/auth';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAuth, useAuthStore, ProtectedRoute } from '@/features/auth';
+import type { Exercise } from '@/types';
 
 // ============================================================================
 // 1. LOGIN EXAMPLE
@@ -12,6 +18,7 @@ import { useAuth } from '@/features/auth';
 
 function LoginPage() {
   const { login, isLoading } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -62,6 +69,7 @@ function LoginPage() {
 
 function RegisterPage() {
   const { register, isLoading } = useAuth();
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -124,8 +132,6 @@ function RegisterPage() {
 // ============================================================================
 // 3. PROTECTED ROUTE EXAMPLE
 // ============================================================================
-
-import { ProtectedRoute } from '@/features/auth';
 
 function DashboardPage() {
   return (
@@ -191,10 +197,6 @@ function Header() {
 // 6. LOAD PROFILE ON APP MOUNT EXAMPLE
 // ============================================================================
 
-'use client';
-
-import { useEffect } from 'react';
-
 function AppInitializer({ children }: { children: React.ReactNode }) {
   const { loadProfile, isAuthenticated } = useAuth();
 
@@ -216,7 +218,7 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
 // 7. CONDITIONAL RENDERING BASED ON AUTH STATE
 // ============================================================================
 
-function ExerciseCard({ exercise }) {
+function ExerciseCard({ exercise }: { exercise: Exercise }) {
   const { isAuthenticated, user } = useAuth();
 
   return (
@@ -228,8 +230,8 @@ function ExerciseCard({ exercise }) {
         <button>Edit Exercise</button>
       )}
       
-      {/* Only show to trainers */}
-      {user?.role === 'TRAINER' && (
+      {/* Only show to admins */}
+      {user?.role === 'ADMIN' && (
         <button>Delete Exercise</button>
       )}
     </div>
@@ -239,8 +241,6 @@ function ExerciseCard({ exercise }) {
 // ============================================================================
 // 8. DIRECT STORE ACCESS (ADVANCED)
 // ============================================================================
-
-import { useAuthStore } from '@/features/auth';
 
 function AdvancedComponent() {
   // Access store directly without re-render on every state change
@@ -278,19 +278,20 @@ function LogoutButton() {
 // 10. CHECK AUTH STATUS BEFORE ACTION
 // ============================================================================
 
-function SaveExerciseButton({ exercise }) {
-  const { isAuthenticated, user } = useAuth();
+function SaveExerciseButton({ exercise }: { exercise: Exercise }) {
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!isAuthenticated) {
       // Redirect to login
       router.push('/login?redirect=/exercises');
       return;
     }
 
-    // Save exercise
-    saveExercise(exercise);
+    // Save exercise (example - implement your own save logic)
+    console.log('Saving exercise:', exercise);
+    // await apiClient.post('/exercises', exercise);
   };
 
   return <button onClick={handleSave}>Save Exercise</button>;
