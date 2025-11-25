@@ -9,6 +9,8 @@
 import { useAuth } from './hooks/use-auth';
 
 export * from './components/protected-route';
+export * from './components/login-form';
+export * from './components/register-form';
 
 /**
  * Example: Simple auth status component
