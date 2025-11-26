@@ -3,10 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dumbbell, Globe, Building2 } from 'lucide-react';
+import { Dumbbell, Globe, Building2, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Exercise } from '../types';
-import { MUSCLE_GROUP_LABELS, MUSCLE_GROUP_COLORS } from '../types';
+import type { Exercise, MuscleGroup } from '../types';
+import { MUSCLE_GROUP_LABELS, MUSCLE_GROUP_COLORS, EQUIPMENT_LABELS } from '../types';
 
 interface ExerciseCardProps {
   exercise: Exercise;
@@ -14,6 +14,10 @@ interface ExerciseCardProps {
 }
 
 export function ExerciseCard({ exercise, onClick }: ExerciseCardProps) {
+  // Get primary muscle groups from the exercise
+  const primaryMuscles = exercise.primary_muscles || [];
+  const secondaryMuscles = exercise.secondary_muscles || [];
+
   return (
     <Card
       className={cn(
@@ -27,15 +31,22 @@ export function ExerciseCard({ exercise, onClick }: ExerciseCardProps) {
           <CardTitle className="text-lg font-semibold line-clamp-1 group-hover:text-primary transition-colors">
             {exercise.name}
           </CardTitle>
-          {exercise.is_global ? (
-            <span title="Global exercise">
-              <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-            </span>
-          ) : (
-            <span title="Organization exercise">
-              <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-            </span>
-          )}
+          <div className="flex items-center gap-1 shrink-0">
+            {exercise.is_compound && (
+              <span title="Compound exercise">
+                <Layers className="h-4 w-4 text-muted-foreground" />
+              </span>
+            )}
+            {exercise.is_global ? (
+              <span title="Global exercise">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+              </span>
+            ) : (
+              <span title="Organization exercise">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              </span>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -46,25 +57,45 @@ export function ExerciseCard({ exercise, onClick }: ExerciseCardProps) {
           </p>
         )}
 
-        {/* Badges */}
+        {/* Primary Muscle Badges */}
         <div className="flex flex-wrap gap-2">
-          <Badge
-            variant="secondary"
-            className={cn(
-              'text-xs font-medium',
-              MUSCLE_GROUP_COLORS[exercise.muscle_group]
-            )}
-          >
-            {MUSCLE_GROUP_LABELS[exercise.muscle_group]}
-          </Badge>
+          {primaryMuscles.map((muscleName) => {
+            // Try to find the muscle group key from the label
+            const muscleKey = Object.entries(MUSCLE_GROUP_LABELS).find(
+              ([, label]) => label === muscleName
+            )?.[0] as MuscleGroup | undefined;
+            
+            return (
+              <Badge
+                key={muscleName}
+                variant="secondary"
+                className={cn(
+                  'text-xs font-medium',
+                  muscleKey ? MUSCLE_GROUP_COLORS[muscleKey] : 'bg-primary/10 text-primary'
+                )}
+              >
+                {muscleName}
+              </Badge>
+            );
+          })}
 
-          {exercise.equipment && (
-            <Badge variant="outline" className="text-xs">
-              <Dumbbell className="h-3 w-3 mr-1" />
-              {exercise.equipment}
+          {/* Show secondary muscles count if any */}
+          {secondaryMuscles.length > 0 && (
+            <Badge variant="outline" className="text-xs text-muted-foreground">
+              +{secondaryMuscles.length} secondary
             </Badge>
           )}
         </div>
+
+        {/* Equipment Badge */}
+        {exercise.equipment && (
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">
+              <Dumbbell className="h-3 w-3 mr-1" />
+              {exercise.equipment_name || EQUIPMENT_LABELS[exercise.equipment] || exercise.equipment}
+            </Badge>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

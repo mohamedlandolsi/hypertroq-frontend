@@ -9,6 +9,8 @@ import type { Exercise, MuscleGroup } from '../types';
 
 interface GetExercisesParams {
   muscle_group?: MuscleGroup;
+  limit?: number;
+  skip?: number;
 }
 
 /**
@@ -18,6 +20,8 @@ export async function getExercises(params?: GetExercisesParams): Promise<Exercis
   const response = await axiosInstance.get<Exercise[] | { items: Exercise[]; data: Exercise[] }>('/exercises', {
     params: {
       ...(params?.muscle_group && { muscle_group: params.muscle_group }),
+      limit: params?.limit ?? 100, // Request more items to see all exercises
+      skip: params?.skip ?? 0,
     },
   });
   
@@ -52,8 +56,8 @@ export async function getExerciseById(id: string): Promise<Exercise> {
 export interface CreateExerciseData {
   name: string;
   description?: string;
-  muscle_group: MuscleGroup;
-  equipment?: string;
+  equipment: string;
+  muscle_contributions: Record<MuscleGroup, number>;
   image_url?: string;
 }
 
