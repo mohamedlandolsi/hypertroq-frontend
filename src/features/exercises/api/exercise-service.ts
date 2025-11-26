@@ -15,12 +15,27 @@ interface GetExercisesParams {
  * Fetch all exercises with optional filters
  */
 export async function getExercises(params?: GetExercisesParams): Promise<Exercise[]> {
-  const response = await axiosInstance.get<Exercise[]>('/exercises', {
+  const response = await axiosInstance.get<Exercise[] | { items: Exercise[]; data: Exercise[] }>('/exercises', {
     params: {
       ...(params?.muscle_group && { muscle_group: params.muscle_group }),
     },
   });
-  return response.data;
+  
+  // Handle both array response and paginated response formats
+  const data = response.data;
+  if (Array.isArray(data)) {
+    return data;
+  }
+  // Handle paginated response with 'items' or 'data' property
+  if (data && typeof data === 'object') {
+    if ('items' in data && Array.isArray(data.items)) {
+      return data.items;
+    }
+    if ('data' in data && Array.isArray(data.data)) {
+      return data.data;
+    }
+  }
+  return [];
 }
 
 /**

@@ -77,6 +77,9 @@ interface ExerciseListProps {
 }
 
 export function ExerciseList({ exercises, isLoading, onExerciseClick }: ExerciseListProps) {
+  // Ensure exercises is always an array
+  const exerciseList = Array.isArray(exercises) ? exercises : [];
+
   if (isLoading) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -87,7 +90,7 @@ export function ExerciseList({ exercises, isLoading, onExerciseClick }: Exercise
     );
   }
 
-  if (exercises.length === 0) {
+  if (exerciseList.length === 0) {
     return (
       <Card className="border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-16">
@@ -105,7 +108,7 @@ export function ExerciseList({ exercises, isLoading, onExerciseClick }: Exercise
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {exercises.map((exercise) => (
+      {exerciseList.map((exercise) => (
         <ExerciseCard
           key={exercise.id}
           exercise={exercise}
