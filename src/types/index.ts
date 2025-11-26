@@ -7,6 +7,7 @@ export interface User {
   email: string;
   full_name: string;
   organization_id: string;
+  organization_name?: string; // Optional: may be included in profile response
   role: 'USER' | 'ADMIN';
   is_active: boolean;
   is_verified: boolean;
