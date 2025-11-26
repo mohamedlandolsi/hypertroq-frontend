@@ -81,7 +81,7 @@ export const useAuthStore = create<AuthState>()(
 
           // After registration, login automatically
           await useAuthStore.getState().login({
-            username: data.email,
+            email: data.email,
             password: data.password,
           });
 
