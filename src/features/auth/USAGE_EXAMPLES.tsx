@@ -27,7 +27,7 @@ function LoginPage() {
     
     try {
       await login({
-        username: email, // Note: FastAPI expects 'username' not 'email'
+        email: email, // Backend expects 'email' field
         password,
       });
       

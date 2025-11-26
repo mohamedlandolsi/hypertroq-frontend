@@ -42,7 +42,7 @@ export function LoginForm() {
     try {
       setIsLoading(true);
       await login({
-        username: data.email, // FastAPI expects 'username'
+        email: data.email,
         password: data.password,
       });
       

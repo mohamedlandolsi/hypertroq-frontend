@@ -2,14 +2,13 @@
  * Authentication Service
  * 
  * Handles all authentication-related API calls.
- * Note: Login uses form-urlencoded, not JSON!
  */
 
 import axiosInstance from '@/lib/api-client';
 import type { User, AuthTokens } from '@/types';
 
 export interface LoginCredentials {
-  username: string; // FastAPI OAuth2 expects 'username' field (email)
+  email: string;
   password: string;
 }
 
@@ -21,19 +20,15 @@ export interface RegisterData {
 }
 
 /**
- * Login user with form-urlencoded data
+ * Login user with JSON data
  * POST /auth/login
+ * 
+ * Backend expects: { email: string, password: string }
  */
 export async function loginUser(credentials: LoginCredentials): Promise<AuthTokens> {
-  // Convert to form-urlencoded format
-  const formData = new URLSearchParams();
-  formData.append('username', credentials.username);
-  formData.append('password', credentials.password);
-
-  const response = await axiosInstance.post<AuthTokens>('/auth/login', formData, {
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+  const response = await axiosInstance.post<AuthTokens>('/auth/login', {
+    email: credentials.email,
+    password: credentials.password,
   });
 
   return response.data;
