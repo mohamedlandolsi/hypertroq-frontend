@@ -69,3 +69,34 @@ export const MUSCLE_GROUP_COLORS: Record<MuscleGroup, string> = {
   TRAPS: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400',
   GLUTES: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400',
 };
+
+// Equipment options
+export const EQUIPMENT_OPTIONS = [
+  'Barbell',
+  'Dumbbell',
+  'Machine',
+  'Cable',
+  'Bodyweight',
+  'Kettlebell',
+  'Resistance Band',
+  'EZ Bar',
+  'Smith Machine',
+  'Other',
+] as const;
+
+export type Equipment = (typeof EQUIPMENT_OPTIONS)[number];
+
+// Difficulty levels
+export const DIFFICULTY_LEVELS = [
+  'BEGINNER',
+  'INTERMEDIATE',
+  'ADVANCED',
+] as const;
+
+export type DifficultyLevel = (typeof DIFFICULTY_LEVELS)[number];
+
+export const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
+  BEGINNER: 'Beginner',
+  INTERMEDIATE: 'Intermediate',
+  ADVANCED: 'Advanced',
+};

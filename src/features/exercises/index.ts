@@ -15,3 +15,4 @@ export * from './hooks/use-exercises';
 
 // Components
 export * from './components/exercise-list';
+export * from './components/create-exercise-modal';

@@ -14,6 +14,7 @@ import { Search, Plus, X } from 'lucide-react';
 import {
   useExercises,
   ExerciseList,
+  CreateExerciseModal,
   MUSCLE_GROUPS,
   MUSCLE_GROUP_LABELS,
   type MuscleGroup,
@@ -22,6 +23,7 @@ import {
 export default function ExercisesPage() {
   const [muscleGroupFilter, setMuscleGroupFilter] = useState<MuscleGroup | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Fetch exercises with muscle group filter
   const { data: exercises = [], isLoading, isError } = useExercises(
@@ -59,7 +61,7 @@ export default function ExercisesPage() {
             Browse and manage your exercise library.
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setIsCreateModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Create New
         </Button>
@@ -127,6 +129,12 @@ export default function ExercisesPage() {
           // TODO: Navigate to exercise detail or open modal
           console.log('Clicked exercise:', exercise);
         }}
+      />
+
+      {/* Create Exercise Modal */}
+      <CreateExerciseModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
       />
     </div>
   );
