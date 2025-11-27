@@ -73,10 +73,10 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<User> 
 
 /**
  * Change user password
- * POST /users/me/change-password
+ * PUT /users/me/password
  */
 export async function changePassword(data: ChangePasswordData): Promise<{ message: string }> {
-  const response = await axiosInstance.post<{ message: string }>('/users/me/change-password', data);
+  const response = await axiosInstance.put<{ message: string }>('/users/me/password', data);
   return response.data;
 }
 
