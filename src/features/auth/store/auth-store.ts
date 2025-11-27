@@ -30,6 +30,7 @@ interface AuthState {
   logout: () => void;
   loadProfile: () => Promise<void>;
   setLoading: (loading: boolean) => void;
+  setUser: (user: User) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -42,6 +43,9 @@ export const useAuthStore = create<AuthState>()(
 
       // Set loading state
       setLoading: (loading) => set({ isLoading: loading }),
+
+      // Set user (for profile updates)
+      setUser: (user) => set({ user }),
 
       // Login action
       login: async (credentials) => {

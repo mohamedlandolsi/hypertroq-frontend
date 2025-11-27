@@ -90,24 +90,25 @@ export function SessionEditor({
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Session Header */}
-      <div className="border-b bg-background px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">{session.name}</h2>
+      <div className="border-b bg-background px-4 md:px-6 py-3 md:py-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="text-lg md:text-xl font-semibold truncate">{session.name}</h2>
             <p className="text-sm text-muted-foreground mt-0.5">
               {sessionExercises.length} exercises · {totalSets} sets
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {hasUnsavedChanges && (
-              <Badge variant="outline" className="text-amber-600 border-amber-300">
-                Unsaved changes
+              <Badge variant="outline" className="text-amber-600 border-amber-300 hidden sm:flex">
+                Unsaved
               </Badge>
             )}
             <Button
               onClick={onSave}
               disabled={!hasUnsavedChanges || isSaving}
               size="sm"
+              className={hasUnsavedChanges ? 'animate-pulse' : ''}
             >
               {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
@@ -116,7 +117,7 @@ export function SessionEditor({
       </div>
 
       {/* Exercise List */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6">
         {sessionExercises.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12">
@@ -204,48 +205,63 @@ function ExerciseRow({
       )}
     >
       <CardContent className="p-0">
-        {/* Main Row */}
-        <div className="flex items-center gap-3 p-4">
-          {/* Drag Handle & Order */}
-          <div className="flex items-center gap-1">
-            <GripVertical className="h-4 w-4 text-muted-foreground/50 cursor-grab" />
-            <span className="text-sm font-medium text-muted-foreground w-5">
-              {index + 1}
-            </span>
-          </div>
+        {/* Main Row - Stacks on mobile */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 md:p-4">
+          {/* Top row on mobile: Order, Name, Actions */}
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:flex-1">
+            {/* Drag Handle & Order */}
+            <div className="flex items-center gap-1 shrink-0">
+              <GripVertical className="h-4 w-4 text-muted-foreground/50 cursor-grab hidden sm:block" />
+              <span className="text-sm font-medium text-muted-foreground w-5">
+                {index + 1}
+              </span>
+            </div>
 
-          {/* Exercise Info */}
-          <div
-            className="flex-1 min-w-0 cursor-pointer"
-            onClick={onToggleExpand}
-          >
-            <div className="flex items-center gap-2">
-              <p className="font-medium truncate">{exercise.exercise_name}</p>
-              {exercise.equipment && (
-                <Badge variant="secondary" className="text-xs shrink-0">
-                  {EQUIPMENT_LABELS[exercise.equipment as Equipment] ||
-                    exercise.equipment}
-                </Badge>
+            {/* Exercise Info */}
+            <div
+              className="flex-1 min-w-0 cursor-pointer"
+              onClick={onToggleExpand}
+            >
+              <div className="flex items-center gap-2">
+                <p className="font-medium truncate text-sm md:text-base">{exercise.exercise_name}</p>
+                {exercise.equipment && (
+                  <Badge variant="secondary" className="text-xs shrink-0 hidden sm:flex">
+                    {EQUIPMENT_LABELS[exercise.equipment as Equipment] ||
+                      exercise.equipment}
+                  </Badge>
+                )}
+              </div>
+              {exercise.primary_muscles && exercise.primary_muscles.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {exercise.primary_muscles.join(', ')}
+                </p>
               )}
             </div>
-            {exercise.primary_muscles && exercise.primary_muscles.length > 0 && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {exercise.primary_muscles.join(', ')}
-              </p>
-            )}
+
+            {/* Mobile-only inline actions */}
+            <div className="flex items-center gap-1 sm:hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive hover:text-destructive"
+                onClick={onRemove}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
-          {/* Quick Inputs */}
-          <div className="flex items-center gap-4">
+          {/* Bottom row on mobile: Inputs */}
+          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
             {/* Sets */}
-            <div className="text-center">
+            <div className="flex-1 sm:flex-initial text-center">
               <Input
                 type="number"
                 min={1}
                 max={10}
                 value={exercise.sets || 3}
                 onChange={(e) => onUpdate({ sets: parseInt(e.target.value) || 3 })}
-                className="w-16 h-8 text-center text-sm"
+                className="w-full sm:w-16 h-10 sm:h-8 text-center text-sm"
               />
               <span className="text-[10px] text-muted-foreground uppercase">
                 Sets
@@ -253,13 +269,13 @@ function ExerciseRow({
             </div>
 
             {/* Reps */}
-            <div className="text-center">
+            <div className="flex-1 sm:flex-initial text-center">
               <Input
                 type="text"
                 placeholder="8-12"
                 value={exercise.target_reps || ''}
                 onChange={(e) => onUpdate({ target_reps: e.target.value })}
-                className="w-20 h-8 text-center text-sm"
+                className="w-full sm:w-20 h-10 sm:h-8 text-center text-sm"
               />
               <span className="text-[10px] text-muted-foreground uppercase">
                 Reps
@@ -267,7 +283,7 @@ function ExerciseRow({
             </div>
 
             {/* RPE */}
-            <div className="text-center">
+            <div className="flex-1 sm:flex-initial text-center">
               <Input
                 type="number"
                 min={1}
@@ -277,7 +293,7 @@ function ExerciseRow({
                 onChange={(e) =>
                   onUpdate({ rpe: parseInt(e.target.value) || undefined })
                 }
-                className="w-14 h-8 text-center text-sm"
+                className="w-full sm:w-14 h-10 sm:h-8 text-center text-sm"
               />
               <span className="text-[10px] text-muted-foreground uppercase">
                 RPE
@@ -285,8 +301,8 @@ function ExerciseRow({
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-1">
+          {/* Desktop Actions */}
+          <div className="hidden sm:flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
@@ -318,15 +334,15 @@ function ExerciseRow({
 
         {/* Expanded Notes Section */}
         {isExpanded && (
-          <div className="px-4 pb-4 pt-0 border-t bg-muted/30">
+          <div className="px-3 md:px-4 pb-3 md:pb-4 pt-0 border-t bg-muted/30">
             <div className="flex items-start gap-2 pt-3">
-              <MessageSquare className="h-4 w-4 text-muted-foreground mt-2" />
+              <MessageSquare className="h-4 w-4 text-muted-foreground mt-2 hidden sm:block" />
               <div className="flex-1">
                 <label className="text-xs font-medium text-muted-foreground">
                   Notes
                 </label>
                 <Input
-                  placeholder="Add notes for this exercise (e.g., focus on mind-muscle connection)"
+                  placeholder="Add notes for this exercise..."
                   value={exercise.notes || ''}
                   onChange={(e) => onUpdate({ notes: e.target.value })}
                   className="mt-1"

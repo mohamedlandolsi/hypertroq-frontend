@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -13,6 +14,8 @@ import {
   RefreshCw,
   LayoutGrid,
   Settings,
+  Menu,
+  ChevronDown,
 } from 'lucide-react';
 import {
   useProgram,
@@ -50,6 +53,7 @@ export default function ProgramEditorPage() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false);
   const [isExercisePickerOpen, setIsExercisePickerOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Local state for unsaved changes
   const [localExercises, setLocalExercises] = useState<
@@ -103,6 +107,7 @@ export default function ProgramEditorPage() {
   // Handlers
   const handleSelectSession = useCallback((sessionId: string) => {
     setSelectedSessionId(sessionId);
+    setIsMobileSidebarOpen(false); // Close mobile sidebar on selection
   }, []);
 
   const handleAddSession = async (data: { name: string }) => {
@@ -294,7 +299,7 @@ export default function ProgramEditorPage() {
   if (isLoading) {
     return (
       <div className="flex h-[calc(100vh-8rem)]">
-        <div className="w-64 border-r bg-muted/30 p-4 space-y-2">
+        <div className="hidden md:block w-64 border-r bg-muted/30 p-4 space-y-2">
           <Skeleton className="h-5 w-20 mb-4" />
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-12 w-full" />
@@ -335,19 +340,20 @@ export default function ProgramEditorPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
       {/* Header */}
-      <div className="border-b bg-background px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className="border-b bg-background px-4 md:px-6 py-3 md:py-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
             <Button
               variant="ghost"
               size="icon"
+              className="shrink-0"
               onClick={() => router.push('/programs')}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div>
-              <h1 className="text-xl font-semibold">{program.name}</h1>
-              <div className="flex items-center gap-2 mt-1">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg md:text-xl font-semibold truncate">{program.name}</h1>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <Badge variant="secondary" className="text-xs">
                   <LayoutGrid className="h-3 w-3 mr-1" />
                   {SPLIT_TYPE_LABELS[program.split_type]}
@@ -363,24 +369,59 @@ export default function ProgramEditorPage() {
               </div>
             </div>
           </div>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="shrink-0 hidden sm:flex">
             <Settings className="h-4 w-4 mr-2" />
             Settings
+          </Button>
+          <Button variant="ghost" size="icon" className="shrink-0 sm:hidden">
+            <Settings className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Session Sidebar */}
-        <SessionSidebar
-          sessions={program.sessions || []}
-          selectedSessionId={selectedSessionId}
-          onSelectSession={handleSelectSession}
-          onAddSession={() => setIsAddSessionModalOpen(true)}
-          onDeleteSession={handleDeleteSession}
-          onRenameSession={handleRenameSession}
-        />
+        {/* Mobile Session Selector */}
+        <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              className="md:hidden fixed bottom-4 left-4 z-50 h-14 gap-2 rounded-2xl bg-card border shadow-lg px-4"
+            >
+              <Menu className="h-5 w-5" />
+              <span className="font-medium">
+                {currentSession?.name || 'Sessions'}
+              </span>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-72 p-0" title="Sessions">
+            <SessionSidebar
+              sessions={program.sessions || []}
+              selectedSessionId={selectedSessionId}
+              onSelectSession={handleSelectSession}
+              onAddSession={() => {
+                setIsAddSessionModalOpen(true);
+                setIsMobileSidebarOpen(false);
+              }}
+              onDeleteSession={handleDeleteSession}
+              onRenameSession={handleRenameSession}
+              isMobile
+            />
+          </SheetContent>
+        </Sheet>
+
+        {/* Desktop Session Sidebar */}
+        <div className="hidden md:block">
+          <SessionSidebar
+            sessions={program.sessions || []}
+            selectedSessionId={selectedSessionId}
+            onSelectSession={handleSelectSession}
+            onAddSession={() => setIsAddSessionModalOpen(true)}
+            onDeleteSession={handleDeleteSession}
+            onRenameSession={handleRenameSession}
+          />
+        </div>
 
         {/* Session Editor */}
         <SessionEditor

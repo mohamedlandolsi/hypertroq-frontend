@@ -28,6 +28,7 @@ interface SessionSidebarProps {
   onDeleteSession: (sessionId: string) => void;
   onRenameSession: (sessionId: string, newName: string) => void;
   isLoading?: boolean;
+  isMobile?: boolean;
 }
 
 export function SessionSidebar({
@@ -38,6 +39,7 @@ export function SessionSidebar({
   onDeleteSession,
   onRenameSession,
   isLoading,
+  isMobile,
 }: SessionSidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
@@ -79,7 +81,10 @@ export function SessionSidebar({
   }
 
   return (
-    <div className="w-64 border-r bg-muted/30 flex flex-col h-full">
+    <div className={cn(
+      "flex flex-col h-full",
+      isMobile ? "w-full" : "w-64 border-r bg-muted/30"
+    )}>
       {/* Header */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between">
