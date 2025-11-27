@@ -19,7 +19,7 @@ export function ProtectedRoute({
   children, 
   redirectTo = '/login' 
 }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, loadProfile } = useAuth();
+  const { isAuthenticated, isLoading, user, loadProfile } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -29,15 +29,29 @@ export function ProtectedRoute({
       : null;
 
     if (token && !isAuthenticated && !isLoading) {
-      loadProfile().catch(() => {
-        // Profile load failed, redirect to login
-        router.push(redirectTo);
-      });
+      loadProfile()
+        .then((loadedUser) => {
+          // Check if user has pending deletion
+          if (loadedUser.deletion_requested_at) {
+            router.push('/account-recovery');
+          }
+        })
+        .catch(() => {
+          // Profile load failed, redirect to login
+          router.push(redirectTo);
+        });
     } else if (!token && !isAuthenticated) {
       // No token, redirect immediately
       router.push(redirectTo);
     }
   }, [isAuthenticated, isLoading, loadProfile, router, redirectTo]);
+
+  // Check if authenticated user has pending deletion
+  useEffect(() => {
+    if (isAuthenticated && user?.deletion_requested_at) {
+      router.push('/account-recovery');
+    }
+  }, [isAuthenticated, user, router]);
 
   // Show loading state
   if (isLoading) {

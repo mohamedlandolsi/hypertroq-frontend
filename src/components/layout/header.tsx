@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/features/auth/hooks/use-auth';
+import { useAuthStore } from '@/features/auth/store/auth-store';
 import { MobileSidebar } from './sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -34,7 +34,8 @@ interface HeaderProps {
 
 export function Header({ className }: HeaderProps) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   const breadcrumbs = generateBreadcrumbs(pathname);
 
   // Get user initials for avatar fallback
@@ -109,7 +110,7 @@ export function Header({ className }: HeaderProps) {
             className="relative h-9 w-9 rounded-full ring-2 ring-transparent hover:ring-violet-500/20 transition-all duration-200"
           >
             <Avatar className="h-9 w-9">
-              <AvatarImage src="" alt={user?.full_name || 'User'} />
+              <AvatarImage src={user?.profile_image_url || ''} alt={user?.full_name || 'User'} />
               <AvatarFallback className="bg-linear-to-br from-violet-500 to-indigo-600 text-white font-medium text-sm">
                 {getInitials(user?.full_name)}
               </AvatarFallback>

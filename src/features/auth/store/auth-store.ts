@@ -25,10 +25,10 @@ interface AuthState {
   isLoading: boolean;
 
   // Actions
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<User>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
-  loadProfile: () => Promise<void>;
+  loadProfile: () => Promise<User>;
   setLoading: (loading: boolean) => void;
   setUser: (user: User) => void;
 }
@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>()(
       // Set user (for profile updates)
       setUser: (user) => set({ user }),
 
-      // Login action
+      // Login action - returns user for caller to handle redirects
       login: async (credentials) => {
         try {
           set({ isLoading: true });
@@ -67,7 +67,8 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
           });
 
-          toast.success('Logged in successfully!');
+          // Return user so caller can check deletion status and redirect appropriately
+          return user;
         } catch (error) {
           set({ isLoading: false });
           // Error toast already shown by axios interceptor
@@ -112,7 +113,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      // Load user profile
+      // Load user profile - returns user for caller to handle redirects if needed
       loadProfile: async () => {
         try {
           set({ isLoading: true });
@@ -124,6 +125,8 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
+
+          return user;
         } catch (error) {
           // If profile load fails, clear auth state
           removeAuthToken();

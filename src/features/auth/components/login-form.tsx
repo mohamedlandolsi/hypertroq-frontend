@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,12 +42,20 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsLoading(true);
-      await login({
+      const user = await login({
         email: data.email,
         password: data.password,
       });
       
-      // Success! Redirect to dashboard
+      // Check if account is pending deletion
+      if (user.deletion_requested_at) {
+        // Redirect to account recovery page
+        router.push('/account-recovery');
+        return;
+      }
+
+      // Normal login - redirect to dashboard
+      toast.success('Logged in successfully!');
       router.push('/dashboard');
     } catch (error) {
       // Error toast already shown by axios interceptor

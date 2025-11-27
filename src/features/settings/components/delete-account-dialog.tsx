@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Calendar } from 'lucide-react';
 
 import {
   Dialog,
@@ -18,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { deleteAccount } from '@/features/auth/api/auth-service';
+import { deleteAccount, type DeleteAccountResponse } from '@/features/auth/api/auth-service';
 import { useAuthStore } from '@/features/auth/store/auth-store';
 
 const deleteAccountSchema = z.object({
@@ -58,13 +57,21 @@ export function DeleteAccountDialog({
 
   const mutation = useMutation({
     mutationFn: deleteAccount,
-    onSuccess: () => {
-      toast.success('Your account has been deleted. Goodbye!');
+    onSuccess: (data: DeleteAccountResponse) => {
+      const deletionDate = new Date(data.deletion_date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+      toast.success(
+        `Account deletion scheduled for ${deletionDate}. You have ${data.days_remaining} days to cancel.`,
+        { duration: 8000 }
+      );
       // Logout and redirect to login
       logout();
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to delete account');
+      toast.error(error.message || 'Failed to request account deletion');
     },
   });
 
@@ -88,14 +95,28 @@ export function DeleteAccountDialog({
             Delete Account
           </DialogTitle>
           <DialogDescription>
-            This action is <strong>permanent and irreversible</strong>. All your
-            data, including programs, exercises, and settings will be deleted.
+            Request account deletion. Your account will be permanently deleted
+            after a 30-day grace period.
           </DialogDescription>
         </DialogHeader>
 
+        <div className="rounded-lg border border-amber-500/50 bg-amber-50 dark:bg-amber-950/30 p-4">
+          <div className="flex items-start gap-2">
+            <Calendar className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                30-Day Grace Period
+              </p>
+              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                Your account will be scheduled for deletion. You&apos;ll have 30 days to cancel if you change your mind.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
           <p className="text-sm text-destructive font-medium">
-            ⚠️ Warning: This cannot be undone!
+            ⚠️ After the grace period:
           </p>
           <ul className="mt-2 text-sm text-muted-foreground space-y-1">
             <li>• All your training programs will be deleted</li>
@@ -139,7 +160,7 @@ export function DeleteAccountDialog({
               variant="destructive"
               disabled={!isDeleteEnabled || mutation.isPending}
             >
-              {mutation.isPending ? 'Deleting...' : 'Delete My Account'}
+              {mutation.isPending ? 'Requesting...' : 'Request Deletion'}
             </Button>
           </div>
         </form>

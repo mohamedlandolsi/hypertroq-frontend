@@ -12,6 +12,7 @@ export interface User {
   is_active: boolean;
   is_verified: boolean;
   profile_image_url: string | null;
+  deletion_requested_at: string | null; // If set, account is pending deletion
   created_at: string;
   updated_at: string;
 }

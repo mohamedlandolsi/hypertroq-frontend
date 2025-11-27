@@ -10,8 +10,11 @@ export {
   registerUser,
   getCurrentUserProfile,
   logoutUser,
+  deleteAccount,
+  cancelDeletion,
   type LoginCredentials,
   type RegisterData,
+  type DeleteAccountResponse,
 } from './api/auth-service';
 
 // Legacy API - export the api object for backward compatibility

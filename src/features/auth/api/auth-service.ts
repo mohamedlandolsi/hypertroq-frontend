@@ -81,14 +81,14 @@ export async function changePassword(data: ChangePasswordData): Promise<{ messag
 }
 
 /**
- * Upload user avatar
- * POST /users/me/avatar
+ * Upload user profile image
+ * PUT /users/me/image
  */
 export async function uploadAvatar(file: File): Promise<User> {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('image', file);
   
-  const response = await axiosInstance.post<User>('/users/me/avatar', formData, {
+  const response = await axiosInstance.put<User>('/users/me/image', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -96,12 +96,29 @@ export async function uploadAvatar(file: File): Promise<User> {
   return response.data;
 }
 
+export interface DeleteAccountResponse {
+  requested_at: string;
+  deletion_date: string;
+  days_remaining: number;
+  message: string;
+}
+
 /**
- * Delete user account
+ * Request account deletion (30-day grace period)
  * DELETE /users/me
  */
-export async function deleteAccount(): Promise<void> {
-  await axiosInstance.delete('/users/me');
+export async function deleteAccount(): Promise<DeleteAccountResponse> {
+  const response = await axiosInstance.delete<DeleteAccountResponse>('/users/me');
+  return response.data;
+}
+
+/**
+ * Cancel account deletion request
+ * POST /users/me/cancel-deletion
+ */
+export async function cancelDeletion(): Promise<{ message: string }> {
+  const response = await axiosInstance.post<{ message: string }>('/users/me/cancel-deletion');
+  return response.data;
 }
 
 /**

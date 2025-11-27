@@ -8,7 +8,6 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
-import { useAuth } from '@/features/auth/hooks/use-auth';
 import { useAuthStore } from '@/features/auth/store/auth-store';
 import {
   updateUserProfile,
@@ -40,7 +39,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
