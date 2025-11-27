@@ -10,17 +10,17 @@ export default function DashboardLayout({
   return (
     <ProtectedRoute>
       <div className="flex h-screen overflow-hidden bg-background">
-        {/* Sidebar */}
+        {/* Sidebar - Solid background */}
         <Sidebar />
 
         {/* Main Content Area */}
         <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Header */}
+          {/* Header - Glass effect */}
           <Header />
 
           {/* Page Content */}
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-            <div className="mx-auto max-w-7xl">
+          <main className="flex-1 overflow-y-auto">
+            <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8 lg:px-8">
               {children}
             </div>
           </main>

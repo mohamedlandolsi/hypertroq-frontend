@@ -79,7 +79,7 @@ export default function ProgramEditorPage() {
       return currentSession.exercises.map((ex, index) => ({
         ...ex,
         id: `${ex.exercise_id}-${index}`,
-        exercise_name: `Exercise ${index + 1}`, // Will be enriched with actual data
+        exercise_name: ex.exercise_name || `Exercise ${index + 1}`,
         target_reps: '',
         rpe: undefined,
       }));

@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
@@ -65,28 +64,28 @@ export function Sidebar({ className }: SidebarProps) {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          'hidden md:flex flex-col h-screen bg-card border-r border-border transition-all duration-300',
-          isCollapsed ? 'w-16' : 'w-64',
+          'hidden md:flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 ease-out',
+          isCollapsed ? 'w-[70px]' : 'w-64',
           className
         )}
       >
         {/* Logo */}
         <div className={cn(
-          'flex items-center h-16 px-4 border-b border-border',
+          'flex items-center h-16 px-4 border-b border-sidebar-border',
           isCollapsed ? 'justify-center' : 'justify-between'
         )}>
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Link href="/dashboard" className="flex items-center gap-3 group">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-violet-500 to-indigo-600 text-white shadow-sm transition-transform duration-200 group-hover:scale-105">
               <Zap className="h-5 w-5" />
             </div>
             {!isCollapsed && (
-              <span className="font-bold text-xl">HypertroQ</span>
+              <span className="font-bold text-xl tracking-tight text-foreground">HypertroQ</span>
             )}
           </Link>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-2 space-y-1">
+        <nav className="flex-1 p-3 space-y-1">
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;
@@ -98,16 +97,16 @@ export function Sidebar({ className }: SidebarProps) {
                     <Link
                       href={item.href}
                       className={cn(
-                        'flex items-center justify-center h-10 w-10 mx-auto rounded-lg transition-colors',
+                        'flex items-center justify-center h-10 w-10 mx-auto rounded-xl transition-all duration-200',
                         isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                          ? 'bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                       )}
                     >
-                      <Icon className="h-5 w-5" />
+                      <Icon className={cn('h-5 w-5', isActive && 'stroke-[2.5px]')} />
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent side="right">
+                  <TooltipContent side="right" className="rounded-lg">
                     {item.title}
                   </TooltipContent>
                 </Tooltip>
@@ -119,27 +118,27 @@ export function Sidebar({ className }: SidebarProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+                  'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
                   isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    ? 'bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400 font-medium'
+                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                 )}
               >
-                <Icon className="h-5 w-5" />
-                <span className="font-medium">{item.title}</span>
+                <Icon className={cn('h-5 w-5', isActive && 'stroke-[2.5px]')} />
+                <span>{item.title}</span>
               </Link>
             );
           })}
         </nav>
 
         {/* Collapse Toggle */}
-        <div className="p-2 border-t border-border">
+        <div className="p-3 border-t border-sidebar-border">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsCollapsed(!isCollapsed)}
             className={cn(
-              'w-full justify-center',
+              'w-full justify-center rounded-xl text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200',
               !isCollapsed && 'justify-start'
             )}
           >
@@ -166,28 +165,28 @@ export function MobileSidebar() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden">
+        <Button variant="ghost" size="icon" className="md:hidden rounded-xl">
           <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-64 p-0" title="Navigation Menu">
+      <SheetContent side="left" className="w-72 p-0 border-r border-sidebar-border" title="Navigation Menu">
         {/* Logo */}
-        <div className="flex items-center h-16 px-4 border-b border-border">
+        <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
           <Link 
             href="/dashboard" 
-            className="flex items-center gap-2"
+            className="flex items-center gap-3"
             onClick={() => setOpen(false)}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-violet-500 to-indigo-600 text-white shadow-sm">
               <Zap className="h-5 w-5" />
             </div>
-            <span className="font-bold text-xl">HypertroQ</span>
+            <span className="font-bold text-xl tracking-tight">HypertroQ</span>
           </Link>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-2 space-y-1">
+        <nav className="flex-1 p-4 space-y-1.5">
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;
@@ -198,14 +197,14 @@ export function MobileSidebar() {
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+                  'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
                   isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    ? 'bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400 font-medium'
+                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                 )}
               >
-                <Icon className="h-5 w-5" />
-                <span className="font-medium">{item.title}</span>
+                <Icon className={cn('h-5 w-5', isActive && 'stroke-[2.5px]')} />
+                <span className="text-[15px]">{item.title}</span>
               </Link>
             );
           })}

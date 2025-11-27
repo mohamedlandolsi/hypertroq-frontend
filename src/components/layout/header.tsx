@@ -6,6 +6,7 @@ import { useAuth } from '@/features/auth/hooks/use-auth';
 import { MobileSidebar } from './sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronRight, LogOut, User, Settings } from 'lucide-react';
+import { ChevronRight, LogOut, User, Settings, Bell } from 'lucide-react';
 
 // Helper to generate breadcrumbs from pathname
 function generateBreadcrumbs(pathname: string) {
@@ -52,7 +53,7 @@ export function Header({ className }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 px-4 md:px-6">
+    <header className="glass-header sticky top-0 z-40 flex h-16 items-center gap-4 px-4 md:px-6">
       {/* Mobile Sidebar Toggle */}
       <MobileSidebar />
 
@@ -60,13 +61,13 @@ export function Header({ className }: HeaderProps) {
       <nav className="hidden md:flex items-center space-x-1 text-sm text-muted-foreground">
         {breadcrumbs.map((crumb, index) => (
           <span key={crumb.href} className="flex items-center">
-            {index > 0 && <ChevronRight className="h-4 w-4 mx-1" />}
+            {index > 0 && <ChevronRight className="h-4 w-4 mx-1 text-border" />}
             {index === breadcrumbs.length - 1 ? (
               <span className="font-medium text-foreground">{crumb.title}</span>
             ) : (
               <Link 
                 href={crumb.href}
-                className="hover:text-foreground transition-colors"
+                className="hover:text-foreground transition-colors duration-200"
               >
                 {crumb.title}
               </Link>
@@ -77,7 +78,7 @@ export function Header({ className }: HeaderProps) {
 
       {/* Mobile Title */}
       <div className="md:hidden flex-1">
-        <span className="font-medium">
+        <span className="font-semibold text-foreground">
           {breadcrumbs[breadcrumbs.length - 1]?.title || 'Dashboard'}
         </span>
       </div>
@@ -85,22 +86,40 @@ export function Header({ className }: HeaderProps) {
       {/* Spacer */}
       <div className="flex-1 hidden md:block" />
 
+      {/* Notification Bell */}
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="relative h-9 w-9 rounded-xl hover:bg-accent transition-colors duration-200"
+      >
+        <Bell className="h-5 w-5 text-muted-foreground" />
+        {/* Notification dot */}
+        <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-violet-500" />
+        <span className="sr-only">Notifications</span>
+      </Button>
+
+      {/* Theme Toggle */}
+      <ThemeToggle />
+
       {/* User Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+          <Button 
+            variant="ghost" 
+            className="relative h-9 w-9 rounded-full ring-2 ring-transparent hover:ring-violet-500/20 transition-all duration-200"
+          >
             <Avatar className="h-9 w-9">
               <AvatarImage src="" alt={user?.full_name || 'User'} />
-              <AvatarFallback className="bg-primary text-primary-foreground">
+              <AvatarFallback className="bg-linear-to-br from-violet-500 to-indigo-600 text-white font-medium text-sm">
                 {getInitials(user?.full_name)}
               </AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuContent className="w-56 rounded-xl shadow-soft-lg" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{user?.full_name || 'User'}</p>
+              <p className="text-sm font-semibold leading-none">{user?.full_name || 'User'}</p>
               <p className="text-xs leading-none text-muted-foreground">
                 {user?.email}
               </p>
@@ -108,13 +127,13 @@ export function Header({ className }: HeaderProps) {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href="/settings" className="cursor-pointer">
+            <Link href="/settings" className="cursor-pointer rounded-lg">
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/settings" className="cursor-pointer">
+            <Link href="/settings" className="cursor-pointer rounded-lg">
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
             </Link>
@@ -122,7 +141,7 @@ export function Header({ className }: HeaderProps) {
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             onClick={handleLogout}
-            className="cursor-pointer text-destructive focus:text-destructive"
+            className="cursor-pointer rounded-lg text-destructive focus:text-destructive focus:bg-destructive/10"
           >
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>

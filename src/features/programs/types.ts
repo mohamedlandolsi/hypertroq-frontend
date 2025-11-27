@@ -74,6 +74,7 @@ export type StructureConfig = WeeklyStructureConfig | CyclicStructureConfig;
 // Session exercise configuration (from API)
 export interface SessionExercise {
   exercise_id: string;
+  exercise_name?: string; // Returned by API with exercise details
   sets: number;
   order_in_session: number;
   notes?: string;
