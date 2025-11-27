@@ -119,10 +119,10 @@ export function CreateExerciseModal({ open, onOpenChange }: CreateExerciseModalP
   const onSubmit = async (data: CreateExerciseFormData) => {
     try {
       // Build muscle_contributions dict with primary at 1.0 and secondary muscles
-      const muscle_contributions: Record<MuscleGroup, number> = {
+      const muscle_contributions: Partial<Record<MuscleGroup, number>> = {
         [data.primary_muscle]: 1.0,
       };
-      
+
       secondaryMuscles.forEach((sm) => {
         muscle_contributions[sm.muscle] = sm.contribution;
       });
@@ -131,7 +131,7 @@ export function CreateExerciseModal({ open, onOpenChange }: CreateExerciseModalP
         name: data.name,
         description: data.description || '',
         equipment: data.equipment,
-        muscle_contributions,
+        muscle_contributions: muscle_contributions as Record<MuscleGroup, number>,
       });
 
       // Reset form and close modal on success
