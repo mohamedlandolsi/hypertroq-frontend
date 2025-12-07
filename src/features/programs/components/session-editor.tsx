@@ -1,6 +1,23 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -10,8 +27,6 @@ import {
   GripVertical,
   Trash2,
   Dumbbell,
-  ChevronDown,
-  ChevronUp,
   MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -49,6 +64,18 @@ export function SessionEditor({
     null
   );
 
+  // DnD Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   if (!session) {
     return (
       <div className="flex-1 flex items-center justify-center bg-muted/20">
@@ -65,24 +92,22 @@ export function SessionEditor({
     );
   }
 
-  const moveExercise = (index: number, direction: 'up' | 'down') => {
-    const newExercises = [...sessionExercises];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
 
-    if (targetIndex < 0 || targetIndex >= newExercises.length) return;
+    if (over && active.id !== over.id) {
+      const oldIndex = sessionExercises.findIndex((ex) => ex.id === active.id);
+      const newIndex = sessionExercises.findIndex((ex) => ex.id === over.id);
 
-    // Swap exercises
-    [newExercises[index], newExercises[targetIndex]] = [
-      newExercises[targetIndex],
-      newExercises[index],
-    ];
+      const newExercises = arrayMove(sessionExercises, oldIndex, newIndex);
 
-    // Update order_in_session
-    newExercises.forEach((ex, i) => {
-      ex.order_in_session = i + 1;
-    });
+      // Update order_in_session
+      newExercises.forEach((ex, i) => {
+        ex.order_in_session = i + 1;
+      });
 
-    onReorderExercises(newExercises);
+      onReorderExercises(newExercises);
+    }
   };
 
   const totalSets = sessionExercises.reduce((acc, ex) => acc + (ex.sets || 0), 0);
@@ -135,83 +160,105 @@ export function SessionEditor({
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {sessionExercises.map((exercise, index) => (
-              <ExerciseRow
-                key={exercise.id}
-                exercise={exercise}
-                index={index}
-                isExpanded={expandedExerciseId === exercise.id}
-                onToggleExpand={() =>
-                  setExpandedExerciseId(
-                    expandedExerciseId === exercise.id ? null : exercise.id
-                  )
-                }
-                onUpdate={(updates) => onUpdateExercise(exercise.id, updates)}
-                onRemove={() => onRemoveExercise(exercise.id)}
-                onMoveUp={() => moveExercise(index, 'up')}
-                onMoveDown={() => moveExercise(index, 'down')}
-                canMoveUp={index > 0}
-                canMoveDown={index < sessionExercises.length - 1}
-              />
-            ))}
-
-            {/* Add Exercise Button */}
-            <Button
-              variant="outline"
-              className="w-full border-dashed"
-              onClick={onOpenExercisePicker}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={sessionExercises.map((ex) => ex.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Exercise
-            </Button>
-          </div>
+              <div className="space-y-3">
+                {sessionExercises.map((exercise, index) => (
+                  <SortableExerciseRow
+                    key={exercise.id}
+                    exercise={exercise}
+                    index={index}
+                    isExpanded={expandedExerciseId === exercise.id}
+                    onToggleExpand={() =>
+                      setExpandedExerciseId(
+                        expandedExerciseId === exercise.id ? null : exercise.id
+                      )
+                    }
+                    onUpdate={(updates) => onUpdateExercise(exercise.id, updates)}
+                    onRemove={() => onRemoveExercise(exercise.id)}
+                  />
+                ))}
+
+                {/* Add Exercise Button */}
+                <Button
+                  variant="outline"
+                  className="w-full border-dashed"
+                  onClick={onOpenExercisePicker}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Exercise
+                </Button>
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
     </div>
   );
 }
 
-interface ExerciseRowProps {
+interface SortableExerciseRowProps {
   exercise: SessionExerciseWithDetails;
   index: number;
   isExpanded: boolean;
   onToggleExpand: () => void;
   onUpdate: (updates: Partial<SessionExerciseWithDetails>) => void;
   onRemove: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
 }
 
-function ExerciseRow({
+function SortableExerciseRow({
   exercise,
   index,
   isExpanded,
   onToggleExpand,
   onUpdate,
   onRemove,
-  onMoveUp,
-  onMoveDown,
-  canMoveUp,
-  canMoveDown,
-}: ExerciseRowProps) {
+}: SortableExerciseRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: exercise.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
     <Card
+      ref={setNodeRef}
+      style={style}
       className={cn(
         'transition-shadow',
-        isExpanded && 'ring-1 ring-primary/20'
+        isExpanded && 'ring-1 ring-primary/20',
+        isDragging && 'opacity-50 shadow-lg ring-2 ring-primary/40 z-50'
       )}
     >
       <CardContent className="p-0">
-        {/* Main Row - Stacks on mobile */}
+        {/* Main Row */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 md:p-4">
           {/* Top row on mobile: Order, Name, Actions */}
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:flex-1">
             {/* Drag Handle & Order */}
             <div className="flex items-center gap-1 shrink-0">
-              <GripVertical className="h-4 w-4 text-muted-foreground/50 cursor-grab hidden sm:block" />
+              <button
+                className="touch-none cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted transition-colors"
+                {...attributes}
+                {...listeners}
+              >
+                <GripVertical className="h-4 w-4 text-muted-foreground/50" />
+              </button>
               <span className="text-sm font-medium text-muted-foreground w-5">
                 {index + 1}
               </span>
@@ -252,83 +299,50 @@ function ExerciseRow({
           </div>
 
           {/* Bottom row on mobile: Inputs */}
-          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+          <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
             {/* Sets */}
-            <div className="flex-1 sm:flex-initial text-center">
+            <div className="flex-1 sm:flex-initial">
+              <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1 text-center">
+                Target Sets
+              </label>
               <Input
                 type="number"
                 min={1}
-                max={10}
+                max={20}
                 value={exercise.sets || 3}
-                onChange={(e) => onUpdate({ sets: parseInt(e.target.value) || 3 })}
-                className="w-full sm:w-16 h-10 sm:h-8 text-center text-sm"
+                onChange={(e) => {
+                  const value = Math.max(1, parseInt(e.target.value) || 1);
+                  onUpdate({ sets: value });
+                }}
+                className="w-full sm:w-20 h-10 text-center text-sm font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
-              <span className="text-[10px] text-muted-foreground uppercase">
-                Sets
-              </span>
             </div>
 
             {/* Reps */}
-            <div className="flex-1 sm:flex-initial text-center">
+            <div className="flex-1 sm:flex-initial">
+              <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1 text-center">
+                Target Reps
+              </label>
               <Input
                 type="text"
                 placeholder="8-12"
                 value={exercise.target_reps || ''}
                 onChange={(e) => onUpdate({ target_reps: e.target.value })}
-                className="w-full sm:w-20 h-10 sm:h-8 text-center text-sm"
+                className="w-full sm:w-24 h-10 text-center text-sm font-medium"
               />
-              <span className="text-[10px] text-muted-foreground uppercase">
-                Reps
-              </span>
             </div>
 
-            {/* RPE */}
-            <div className="flex-1 sm:flex-initial text-center">
-              <Input
-                type="number"
-                min={1}
-                max={10}
-                placeholder="8"
-                value={exercise.rpe || ''}
-                onChange={(e) =>
-                  onUpdate({ rpe: parseInt(e.target.value) || undefined })
-                }
-                className="w-full sm:w-14 h-10 sm:h-8 text-center text-sm"
-              />
-              <span className="text-[10px] text-muted-foreground uppercase">
-                RPE
-              </span>
+            {/* Desktop Delete Button */}
+            <div className="hidden sm:flex items-end pb-0.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                onClick={onRemove}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-          </div>
-
-          {/* Desktop Actions */}
-          <div className="hidden sm:flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={onMoveUp}
-              disabled={!canMoveUp}
-            >
-              <ChevronUp className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={onMoveDown}
-              disabled={!canMoveDown}
-            >
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-destructive hover:text-destructive"
-              onClick={onRemove}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
           </div>
         </div>
 

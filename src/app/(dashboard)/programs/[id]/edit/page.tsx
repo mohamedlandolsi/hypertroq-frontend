@@ -13,7 +13,6 @@ import {
   Calendar,
   RefreshCw,
   LayoutGrid,
-  Settings,
   Menu,
   ChevronDown,
 } from 'lucide-react';
@@ -369,13 +368,6 @@ export default function ProgramEditorPage() {
               </div>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="shrink-0 hidden sm:flex">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
-          </Button>
-          <Button variant="ghost" size="icon" className="shrink-0 sm:hidden">
-            <Settings className="h-4 w-4" />
-          </Button>
         </div>
       </div>
 
