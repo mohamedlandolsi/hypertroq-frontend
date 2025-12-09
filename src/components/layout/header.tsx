@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ChevronRight, LogOut, User, Settings, Bell } from 'lucide-react';
+import { getAvatarUrl } from '@/lib/avatar-utils';
 
 // Helper to generate breadcrumbs from pathname
 function generateBreadcrumbs(pathname: string) {
@@ -110,7 +111,10 @@ export function Header({ className }: HeaderProps) {
             className="relative h-9 w-9 rounded-full ring-2 ring-transparent hover:ring-violet-500/20 transition-all duration-200"
           >
             <Avatar className="h-9 w-9">
-              <AvatarImage src={user?.profile_image_url || ''} alt={user?.full_name || 'User'} />
+              <AvatarImage 
+                src={getAvatarUrl(user?.profile_image_url) || ''} 
+                alt={user?.full_name || 'User'}
+              />
               <AvatarFallback className="bg-linear-to-br from-violet-500 to-indigo-600 text-white font-medium text-sm">
                 {getInitials(user?.full_name)}
               </AvatarFallback>

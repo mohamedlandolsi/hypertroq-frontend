@@ -21,12 +21,15 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  Shield,
 } from 'lucide-react';
+import { RoleGuard } from '@/features/auth/components/role-guard';
 
 interface NavItem {
   title: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  adminOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -49,6 +52,12 @@ const navItems: NavItem[] = [
     title: 'Settings',
     href: '/settings',
     icon: Settings,
+  },
+  {
+    title: 'Admin',
+    href: '/admin',
+    icon: Shield,
+    adminOnly: true,
   },
 ];
 
@@ -90,30 +99,26 @@ export function Sidebar({ className }: SidebarProps) {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;
 
-            if (isCollapsed) {
-              return (
-                <Tooltip key={item.href}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        'flex items-center justify-center h-10 w-10 mx-auto rounded-xl transition-all duration-200',
-                        isActive
-                          ? 'bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
-                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                      )}
-                    >
-                      <Icon className={cn('h-5 w-5', isActive && 'stroke-[2.5px]')} />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="rounded-lg">
-                    {item.title}
-                  </TooltipContent>
-                </Tooltip>
-              );
-            }
-
-            return (
+            const navLink = isCollapsed ? (
+              <Tooltip key={item.href}>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      'flex items-center justify-center h-10 w-10 mx-auto rounded-xl transition-all duration-200',
+                      isActive
+                        ? 'bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                    )}
+                  >
+                    <Icon className={cn('h-5 w-5', isActive && 'stroke-[2.5px]')} />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="rounded-lg">
+                  {item.title}
+                </TooltipContent>
+              </Tooltip>
+            ) : (
               <Link
                 key={item.href}
                 href={item.href}
@@ -128,6 +133,17 @@ export function Sidebar({ className }: SidebarProps) {
                 <span>{item.title}</span>
               </Link>
             );
+
+            // Wrap admin-only items with RoleGuard
+            if (item.adminOnly) {
+              return (
+                <RoleGuard key={item.href} allowedRoles={['ADMIN']}>
+                  {navLink}
+                </RoleGuard>
+              );
+            }
+
+            return navLink;
           })}
         </nav>
 
@@ -191,7 +207,7 @@ export function MobileSidebar() {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;
 
-            return (
+            const navLink = (
               <Link
                 key={item.href}
                 href={item.href}
@@ -207,6 +223,17 @@ export function MobileSidebar() {
                 <span className="text-[15px]">{item.title}</span>
               </Link>
             );
+
+            // Wrap admin-only items with RoleGuard
+            if (item.adminOnly) {
+              return (
+                <RoleGuard key={item.href} allowedRoles={['ADMIN']}>
+                  {navLink}
+                </RoleGuard>
+              );
+            }
+
+            return navLink;
           })}
         </nav>
       </SheetContent>

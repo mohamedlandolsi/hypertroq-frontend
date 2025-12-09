@@ -29,6 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Mail, Building2, Shield, Loader2, Upload } from 'lucide-react';
+import { getAvatarUrl, withCacheBusting } from '@/lib/avatar-utils';
 
 // Profile form schema
 const profileSchema = z.object({
@@ -46,6 +47,7 @@ export default function SettingsPage() {
   // Dialog states
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [avatarKey, setAvatarKey] = useState(Date.now()); // Force avatar refresh
 
   // Profile form
   const {
@@ -84,10 +86,14 @@ export default function SettingsPage() {
   const avatarMutation = useMutation({
     mutationFn: uploadAvatar,
     onSuccess: (updatedUser) => {
+      console.log('Avatar upload success, user:', updatedUser);
+      console.log('profile_image_url:', updatedUser.profile_image_url);
       setUser(updatedUser);
+      setAvatarKey(Date.now()); // Force avatar to refresh
       toast.success('Avatar updated successfully');
     },
     onError: (error: Error) => {
+      console.error('Avatar upload error:', error);
       toast.error(error.message || 'Failed to upload avatar');
     },
   });
@@ -168,9 +174,9 @@ export default function SettingsPage() {
         <CardContent className="space-y-6">
           {/* Avatar */}
           <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20">
+            <Avatar className="h-20 w-20" key={avatarKey}>
               <AvatarImage
-                src={user?.profile_image_url || ''}
+                src={withCacheBusting(getAvatarUrl(user?.profile_image_url), avatarKey)}
                 alt={user?.full_name || 'User'}
               />
               <AvatarFallback className="bg-primary text-primary-foreground text-xl">
