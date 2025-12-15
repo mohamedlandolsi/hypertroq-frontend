@@ -7,6 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Dumbbell, 
   Globe, 
@@ -16,9 +23,15 @@ import {
   Play,
   ImageIcon,
   Gauge,
-  ArrowLeftRight
+  ArrowLeftRight,
+  MoreVertical,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/features/auth/store/auth-store';
+import { DeleteExerciseDialog } from './delete-exercise-dialog';
+import { EditExerciseModal } from './edit-exercise-modal';
 import type { Exercise, MuscleGroup, DifficultyLevel, ForceType } from '../types';
 import { 
   MUSCLE_GROUP_LABELS, 
@@ -145,6 +158,17 @@ function ForceTypeBadge({ forceType }: { forceType: ForceType }) {
 
 export function ExerciseCard({ exercise, onClick }: ExerciseCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
+  // Get current user for permission check
+  const user = useAuthStore((state) => state.user);
+  
+  // Check if user can edit/delete this exercise
+  const canManageExercise = user && (
+    user.role === 'ADMIN' || 
+    user.id === exercise.created_by_user_id
+  );
   
   // Get primary muscle groups from the exercise
   const primaryMuscles = exercise.primary_muscles || [];
@@ -215,6 +239,44 @@ export function ExerciseCard({ exercise, onClick }: ExerciseCardProps) {
                   <span title="Organization exercise">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                   </span>
+                )}
+                {/* Context Menu - Only show if user can manage */}
+                {canManageExercise && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                        <span className="sr-only">Open menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsEditModalOpen(true);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             </div>
@@ -355,6 +417,18 @@ export function ExerciseCard({ exercise, onClick }: ExerciseCardProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Edit/Delete Dialogs - Rendered outside Card click handler */}
+      <DeleteExerciseDialog
+        exercise={exercise}
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      />
+      <EditExerciseModal
+        exercise={isEditModalOpen ? exercise : null}
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+      />
     </Card>
   );
 }

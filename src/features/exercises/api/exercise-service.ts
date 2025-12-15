@@ -74,11 +74,13 @@ export interface UpdateExerciseData {
   description?: string;
   muscle_group?: MuscleGroup;
   equipment?: string;
+  muscle_contributions?: Record<MuscleGroup, number>;
   image_url?: string;
+  video_url?: string;
 }
 
 export async function updateExercise(id: string, data: UpdateExerciseData): Promise<Exercise> {
-  const response = await axiosInstance.patch<Exercise>(`/exercises/${id}`, data);
+  const response = await axiosInstance.put<Exercise>(`/exercises/${id}`, data);
   return response.data;
 }
 
