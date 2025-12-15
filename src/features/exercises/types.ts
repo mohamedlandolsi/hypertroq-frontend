@@ -54,6 +54,9 @@ export interface Exercise {
   equipment: Equipment;
   equipment_name: string;
   image_url: string | null;
+  video_url: string | null;
+  difficulty_level: DifficultyLevel | null;
+  force_type: ForceType | null;
   is_global: boolean;
   created_by_user_id: string | null;
   organization_id: string | null;
@@ -174,4 +177,19 @@ export const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
   BEGINNER: 'Beginner',
   INTERMEDIATE: 'Intermediate',
   ADVANCED: 'Advanced',
+};
+
+// Force types for exercises
+export const FORCE_TYPES = [
+  'PUSH',
+  'PULL',
+  'STATIC',
+] as const;
+
+export type ForceType = (typeof FORCE_TYPES)[number];
+
+export const FORCE_TYPE_LABELS: Record<ForceType, string> = {
+  PUSH: 'Push',
+  PULL: 'Pull',
+  STATIC: 'Static',
 };
